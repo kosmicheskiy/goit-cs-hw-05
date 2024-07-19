@@ -1,30 +1,42 @@
-
-import requests 
+import requests
 from collections import Counter
 import matplotlib.pyplot as plt
 
-# Задана URL-адреса для завантаження тексту
-url = 'https://basket.com.ua/'
+# Функція для відображення результатів
+def visualize_top_words(word_counts, top_n=10):
+    top_words = word_counts.most_common(top_n)
+    plt.figure(figsize=(10, 6))
+    plt.bar([word for word, count in top_words], [count for word, count in top_words])
+    plt.xlabel('Слова')
+    plt.ylabel('Частота використання')
+    plt.title(f'Топ-{top_n} слів у тексті')
+    plt.xticks(rotation=45)
+    plt.show()
 
-# Отримуємо вміст з URL-адреси
-response = requests.get(url)
-text = response.text
+# Функція Map
+def mapper(text):
+    for line in text.split('\n'):
+        for word in line.strip().split():
+            yield word.lower(), 1
 
-# Розділяємо текст на окремі слова (можливо, потрібно додатково обробити пунктуацію)
-words = text.lower().split()
+# Функція Reduce
+def reducer(mapped_values):
+    word_count = Counter()
+    for word, count in mapped_values:
+        word_count[word] += count
+    return word_count
 
-# Підраховуємо кількість входжень кожного слова
-word_counts = Counter(words)
+if __name__ == "__main__":
+    # URL для завантаження тексту
+    url = 'https://basket.com.ua/'
 
-# Вибираємо топ N слів (наприклад, 10)
-top_n = 10
-top_words = word_counts.most_common(top_n)
+    # Отримуємо вміст з URL
+    response = requests.get(url)
+    text = response.text
 
-# Візуалізуємо топ-слова
-plt.figure(figsize=(10, 6))
-plt.bar([word for word, count in top_words], [count for word, count in top_words])
-plt.xlabel('Слова')
-plt.ylabel('Частота використання')
-plt.title(f'Топ-{top_n} слів у тексті')
-plt.xticks(rotation=45)
-plt.show()
+    # Застосовуємо MapReduce
+    mapped_values = list(mapper(text))
+    word_counts = reducer(mapped_values)
+
+    # Візуалізуємо топ-слова
+    visualize_top_words(word_counts)
