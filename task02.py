@@ -1,6 +1,7 @@
 import requests
 from collections import Counter
 import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 
 # Функція для відображення результатів
 def visualize_top_words(word_counts, top_n=10):
@@ -34,9 +35,10 @@ if __name__ == "__main__":
     response = requests.get(url)
     text = response.text
 
-    # Застосовуємо MapReduce
-    mapped_values = list(mapper(text))
-    word_counts = reducer(mapped_values)
+    # Застосовуємо MapReduce з багатопотоковістю
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        mapped_values = list(executor.map(mapper, [text]))
+        word_counts = reducer(mapped_values[0])
 
     # Візуалізуємо топ-слова
     visualize_top_words(word_counts)
